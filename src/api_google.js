@@ -1,7 +1,8 @@
 import dotenv from "dotenv"
 import express from "express";
 import { google } from "googleapis"
-
+import { bot } from "./bot_slack.js";
+import { parse } from 'node-html-parser';
 
 dotenv.config();
 const server = express();
@@ -35,25 +36,44 @@ server.get("/google/redirect", async (req, res) => {
     const { tokens } = await oauth2Client.getToken(code)
     oauth2Client.setCredentials(tokens)
 
-    res.send("<h1> You have succesfully logged in </h1> ")
+    res.send("You have succesfully logged in")
 })
 
+
+function eventsMaxTime(hours, seconds) {
+    const date = new Date();
+    return date.setHours(hours, seconds)
+}
 
 
 server.get("/event_list", async (req, res) => {
 
-const data = await calendar.events.list({
+    const data = await calendar.events.list({
         auth: oauth2Client,
         calendarId: 'primary',
         timeMin: new Date().toISOString(),
         maxResults: 10,
         singleEvents: true,
-        // timeMax:   new Date(),
+        timeMax: new Date(eventsMaxTime(20, 0)),
         orderBy: 'startTime',
         timeZone: "Europe/Rome"
     });
 
-    res.send(JSON.stringify(data.data))
+    data.data.items.map((e) => {
+        bot.on("message", () => {
+            setInterval(() => {
+                bot.postMessageToChannel("generale", `
+                  🗓️ Calendar event today
+                  - event: ${e.summary}
+                  - description: ${e.description}
+                  - start: ${e.start.datetime}
+                  - end: ${e.end.datetime}
+                  - status: ${e.status}
+                  `)
+            }, (1000 * 60 * 60 * 24));
+        })
+    })
+    res.send("Server is running 🚀")
 })
 
 const PORT = 4000;
