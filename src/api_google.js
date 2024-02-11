@@ -35,8 +35,7 @@ server.get("/google/redirect", async (req, res) => {
     const code = req.query.code;
     const { tokens } = await oauth2Client.getToken(code)
     oauth2Client.setCredentials(tokens)
-
-    res.send("You have succesfully logged in")
+    res.send( 'You have succesfully logged in. <a href="http://localhost:4000/event_list">Click here!</a>' )
 })
 
 
@@ -62,15 +61,15 @@ server.get("/event_list", async (req, res) => {
     data.data.items.map((e) => {
         bot.on("message", () => {
             setInterval(() => {
-                bot.postMessageToChannel("generale", `
+                bot.postMessageToChannel("calendar-events-today", `
                   🗓️ Calendar event today
                   - event: ${e.summary}
                   - description: ${e.description}
-                  - start: ${e.start.datetime}
-                  - end: ${e.end.datetime}
+                  - start: ${e.start.dateTime}
+                  - end: ${e.end.dateTime}
                   - status: ${e.status}
                   `)
-            }, (1000 * 60 * 60 * 24));
+            }, (1000 * 60));
         })
     })
     res.send("Server is running 🚀")
